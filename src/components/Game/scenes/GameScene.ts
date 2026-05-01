@@ -2,7 +2,8 @@ import Phaser from "phaser";
 
 enum GameState {
   AIMING,
-  RUNNING
+  RUNNING,
+  LEVEL_COMPLETE
 }
 
 export default class GameScene extends Phaser.Scene {
@@ -12,6 +13,7 @@ export default class GameScene extends Phaser.Scene {
   private trajectoryLine!: Phaser.GameObjects.Graphics;
   private staminaBar!: Phaser.GameObjects.Graphics;
   private staminaContainer!: Phaser.GameObjects.Container;
+  private coinText!: Phaser.GameObjects.Text;
 
   // State
   private currentState: GameState = GameState.AIMING;
@@ -19,6 +21,7 @@ export default class GameScene extends Phaser.Scene {
   private maxStamina = 100;
   private isExhausted = false;
   private cameraTarget: Phaser.GameObjects.GameObject | null = null;
+  private sessionCoins = 0;
 
   // Aiming logic
   private isDragging = false;
@@ -38,6 +41,7 @@ export default class GameScene extends Phaser.Scene {
   private catGround!: number;
   private catBall!: number;
   private catPlayer!: number;
+  private catSensor!: number;
 
   // Input
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -58,6 +62,7 @@ export default class GameScene extends Phaser.Scene {
     this.catGround = this.matter.world.nextCategory();
     this.catBall = this.matter.world.nextCategory();
     this.catPlayer = this.matter.world.nextCategory();
+    this.catSensor = this.matter.world.nextCategory();
 
     // 1. Terrain Generation
     this.createTerrain(width, height);
@@ -68,17 +73,23 @@ export default class GameScene extends Phaser.Scene {
     // 3. Player Character
     this.createPlayer(150, height - 300);
 
-    // 4. UI: Stamina Bar
+    // 4. Hole & Coins
+    this.createLevelAssets(height);
+
+    // 5. UI: Stamina Bar & Coin Counter
     this.createUI();
 
-    // 5. Trajectory Graphics
+    // 6. Trajectory Graphics
     this.trajectoryLine = this.add.graphics();
 
-    // 6. Input System
+    // 7. Input System
     this.setupInput();
 
-    // 7. Camera Setup
+    // 8. Camera Setup
     this.setupCamera(height);
+
+    // 9. Collision Events
+    this.setupCollisionEvents();
 
     // Initial state setup
     this.setGameState(GameState.AIMING);
@@ -100,6 +111,28 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.setLerp(0.1, 0.1);
   }
 
+  private setupCollisionEvents() {
+    this.matter.world.on("collisionstart", (event: Phaser.Physics.Matter.Events.CollisionStartEvent) => {
+      event.pairs.forEach(pair => {
+        const { bodyA, bodyB } = pair;
+        
+        // Player collects Coin
+        if ((bodyA.label === "player" && bodyB.label === "coin") || (bodyA.label === "coin" && bodyB.label === "player")) {
+          const coinBody = bodyA.label === "coin" ? bodyA : bodyB;
+          const coinSprite = coinBody.gameObject as Phaser.GameObjects.GameObject;
+          if (coinSprite && coinSprite.active) {
+            this.collectCoin(coinSprite);
+          }
+        }
+
+        // Ball enters Hole
+        if ((bodyA.label === "ball" && bodyB.label === "hole") || (bodyA.label === "hole" && bodyB.label === "ball")) {
+          this.completeLevel();
+        }
+      });
+    });
+  }
+
   private setGameState(state: GameState) {
     this.currentState = state;
 
@@ -107,14 +140,18 @@ export default class GameScene extends Phaser.Scene {
       this.cameras.main.startFollow(this.ball, true, 0.1, 0.1);
       this.cameraTarget = this.ball;
       this.cameras.main.zoomTo(1.2, 1000, "Power2");
-    } else {
+    } else if (state === GameState.RUNNING) {
       this.cameras.main.startFollow(this.ball, true, 0.1, 0.1);
       this.cameraTarget = this.ball;
       this.cameras.main.zoomTo(1.0, 1000, "Power2");
+    } else if (state === GameState.LEVEL_COMPLETE) {
+      this.cameras.main.stopFollow();
+      this.cameras.main.zoomTo(0.8, 2000, "Power2");
     }
   }
 
   private createUI() {
+    // Stamina
     this.staminaContainer = this.add.container(40, 80).setScrollFactor(0);
     
     const bg = this.add.graphics();
@@ -133,6 +170,122 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.staminaContainer.add([bg, this.staminaBar, label]);
+
+    // Coins
+    this.coinText = this.add.text(40, 130, "COINS: 0", {
+      fontFamily: "Inter, Arial, sans-serif",
+      fontSize: "24px",
+      fontStyle: "900",
+      color: "#39ff14",
+      stroke: "#000000",
+      strokeThickness: 6
+    }).setScrollFactor(0);
+  }
+
+  private createLevelAssets(height: number) {
+    // Spawn Coins
+    for (let i = 0; i < 10; i++) {
+      const x = 500 + i * 350;
+      const y = height - 300 - Math.random() * 200;
+      
+      const coin = this.matter.add.sprite(x, y, "", undefined, {
+        isSensor: true,
+        label: "coin",
+        collisionFilter: {
+          category: this.catSensor,
+          mask: this.catPlayer
+        }
+      });
+
+      const graphics = this.add.graphics();
+      graphics.fillStyle(0x39ff14, 1);
+      graphics.fillCircle(0, 0, 10);
+      graphics.lineStyle(2, 0xffffff, 1);
+      graphics.strokeCircle(0, 0, 10);
+      graphics.generateTexture(`coin-tex-${i}`, 22, 22);
+      graphics.destroy();
+
+      coin.setTexture(`coin-tex-${i}`);
+    }
+
+    // Spawn Hole at the end
+    const holeX = 3800;
+    const holeY = height - 120;
+    const hole = this.matter.add.rectangle(holeX, holeY, 60, 20, {
+      isStatic: true,
+      isSensor: true,
+      label: "hole",
+      collisionFilter: {
+        category: this.catSensor,
+        mask: this.catBall
+      }
+    });
+
+    this.add.rectangle(holeX, holeY + 10, 80, 40, 0xff5f1f).setStrokeStyle(4, 0xffffff);
+    this.add.text(holeX, holeY - 60, "GOAL", {
+      fontFamily: "Inter, Arial, sans-serif",
+      fontSize: "20px",
+      fontStyle: "900",
+      color: "#ffffff"
+    }).setOrigin(0.5);
+  }
+
+  private collectCoin(coin: Phaser.GameObjects.GameObject) {
+    const x = (coin as any).x;
+    const y = (coin as any).y;
+    
+    coin.destroy();
+    this.sessionCoins += 10;
+    this.coinText.setText(`COINS: ${this.sessionCoins}`);
+
+    // Snappy UI tween
+    const plusText = this.add.text(x, y, "+10", {
+      fontFamily: "Inter, Arial, sans-serif",
+      fontSize: "24px",
+      fontStyle: "900",
+      color: "#39ff14"
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets: plusText,
+      y: y - 100,
+      alpha: 0,
+      duration: 800,
+      ease: "Power2",
+      onComplete: () => plusText.destroy()
+    });
+  }
+
+  private async completeLevel() {
+    if (this.currentState === GameState.LEVEL_COMPLETE) return;
+
+    this.setGameState(GameState.LEVEL_COMPLETE);
+
+    const winText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, "LEVEL COMPLETE", {
+      fontFamily: "Inter, Arial, sans-serif",
+      fontSize: "84px",
+      fontStyle: "900",
+      color: "#ffffff",
+      stroke: "#000000",
+      strokeThickness: 12
+    }).setOrigin(0.5).setScrollFactor(0);
+
+    // Sync state
+    try {
+      await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coins: this.sessionCoins })
+      });
+      console.log("State synced successfully");
+    } catch (error) {
+      console.error("Failed to sync state", error);
+    }
+
+    // Redirect to shop after delay
+    this.time.delayedCall(3000, () => {
+      window.location.href = "/shop";
+    });
   }
 
   private createTerrain(width: number, height: number) {
@@ -185,36 +338,24 @@ export default class GameScene extends Phaser.Scene {
       label: "ball",
       collisionFilter: {
         category: this.catBall,
-        mask: this.catGround // Only collide with ground
+        mask: this.catGround | this.catSensor
       }
     });
   }
 
   private createPlayer(x: number, y: number) {
-    // Player is a rectangle/capsule
-    this.player = this.matter.add.sprite(x, y, "", undefined, {
+    this.player = this.matter.add.sprite(x, y, "player-tex", undefined, {
       shape: { type: "rectangle", width: 30, height: 60 },
       friction: 0.1,
       restitution: 0,
       label: "player",
       collisionFilter: {
         category: this.catPlayer,
-        mask: this.catGround // Only collide with ground
+        mask: this.catGround | this.catSensor
       }
     });
 
     this.player.setFixedRotation();
-
-    // Player visual
-    const playerGraphics = this.add.graphics();
-    playerGraphics.fillStyle(0xffffff, 1);
-    playerGraphics.fillRect(-15, -30, 30, 60);
-    playerGraphics.lineStyle(4, 0x000000, 1);
-    playerGraphics.strokeRect(-15, -30, 30, 60);
-    playerGraphics.generateTexture("player-tex", 34, 64);
-    playerGraphics.destroy();
-
-    this.player.setTexture("player-tex");
   }
 
   private onPointerDown(pointer: Phaser.Input.Pointer) {
@@ -292,7 +433,6 @@ export default class GameScene extends Phaser.Scene {
       this.player.setVelocityX(0);
     }
 
-    // Jump
     const isGrounded = Math.abs(this.player.body!.velocity.y) < 0.1;
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) && isGrounded && !this.isExhausted) {
       this.player.setVelocityY(-this.jumpForce);
@@ -324,13 +464,11 @@ export default class GameScene extends Phaser.Scene {
       const ballSpeed = Math.sqrt(ballVel.x * ballVel.x + ballVel.y * ballVel.y);
 
       if (ballSpeed < 0.2) {
-        // Ball stopped, follow player
         if (this.cameraTarget !== this.player) {
           this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
           this.cameraTarget = this.player;
         }
       } else {
-        // Ball moving, follow ball
         if (this.cameraTarget !== this.ball) {
           this.cameras.main.startFollow(this.ball, true, 0.1, 0.1);
           this.cameraTarget = this.ball;

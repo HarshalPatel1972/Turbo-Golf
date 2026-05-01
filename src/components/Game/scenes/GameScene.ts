@@ -56,14 +56,7 @@ export default class GameScene extends Phaser.Scene {
     // Closing the polygon
     vertices.push({ x: terrainWidth, y: height });
 
-    // Create the Matter body
-    // Matter.js needs a specific way to handle concave polygons or multiple bodies
-    // For simplicity and performance, we can create multiple rectangles or a single polygon body
-    // Using fromVertices is common but needs decomp library.
-    // Instead, we can build a chain of rectangles or a single poly body if it's convex (not hilly).
-    // Hilly terrain is usually concave.
-    
-    // We'll create the terrain as a series of rectangles/segments to ensure accurate collision
+    // Create the Matter body as a series of rectangles for physics
     for (let i = 1; i < vertices.length - 2; i++) {
       const p1 = vertices[i];
       const p2 = vertices[i + 1];
@@ -74,22 +67,25 @@ export default class GameScene extends Phaser.Scene {
       const distance = Math.sqrt(dx * dx + dy * dy);
       const angle = Math.atan2(dy, dx);
 
-      const ground = this.matter.add.rectangle(centerX, centerY, distance, 20, {
+      this.matter.add.rectangle(centerX, centerY, distance, 20, {
         isStatic: true,
         angle: angle,
         friction: 0.1,
+        restitution: 0.2,
         label: "ground"
       });
-
-      // Visual for the segment
-      this.add.rectangle(centerX, centerY, distance, 500, 0x000000)
-        .setAngle(Phaser.Math.RadToDeg(angle))
-        .setStrokeStyle(4, 0xffffff);
     }
 
+    // Single Polygon for Visual
+    const visualVertices = [...vertices, { x: terrainWidth, y: height + 500 }, { x: 0, y: height + 500 }];
+    this.add.polygon(0, 0, visualVertices, 0x000000)
+      .setOrigin(0)
+      .setStrokeStyle(6, 0xffffff);
+
     // Update world bounds
-    this.matter.world.setBounds(0, 0, terrainWidth, height);
+    this.matter.world.setBounds(0, -1000, terrainWidth, height + 1000);
   }
+
 
   private createBall(x: number, y: number) {
     // Create a circular physics body for the ball
@@ -163,7 +159,7 @@ export default class GameScene extends Phaser.Scene {
     const forceX = -Math.cos(angle) * distance * this.launchForceMultiplier;
     const forceY = -Math.sin(angle) * distance * this.launchForceMultiplier;
 
-    this.ball.applyForce({ x: forceX, y: forceY });
+    this.ball.applyForce(new Phaser.Math.Vector2(forceX, forceY));
   }
 
   update() {

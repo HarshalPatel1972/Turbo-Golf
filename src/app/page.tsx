@@ -30,7 +30,7 @@ export default function Home() {
         <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl">
           <div className="border-brutalist p-6 text-left">
             <h3 className="text-2xl font-black uppercase mb-2 text-neon-orange">HIGH SPEED</h3>
-            <p className="text-sm uppercase font-bold">This isn't your grandfather's country club. Race against time.</p>
+            <p className="text-sm uppercase font-bold">This isn&apos;t your grandfather&apos;s country club. Race against time.</p>
           </div>
           <div className="border-brutalist p-6 text-left">
             <h3 className="text-2xl font-black uppercase mb-2 text-neon-green">REAL PHYSICS</h3>

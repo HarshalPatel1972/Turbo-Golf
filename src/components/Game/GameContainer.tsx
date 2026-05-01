@@ -52,7 +52,7 @@ export default function GameContainer() {
       }).setOrigin(0.5);
 
       // Matter.js sanity check: add a falling box
-      const box = this.matter.add.rectangle(width / 2, 100, 50, 50, {
+      this.matter.add.rectangle(width / 2, 100, 50, 50, {
         chamfer: { radius: 5 },
       });
       

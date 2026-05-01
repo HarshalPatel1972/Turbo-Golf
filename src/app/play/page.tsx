@@ -1,7 +1,8 @@
+"use client";
+
 import dynamic from "next/dynamic";
 import Link from "next/link";
 
-// Dynamically import the GameContainer with SSR disabled
 const GameContainer = dynamic(() => import("@/components/Game/GameContainer"), {
   ssr: false,
   loading: () => (
@@ -12,6 +13,7 @@ const GameContainer = dynamic(() => import("@/components/Game/GameContainer"), {
     </div>
   ),
 });
+
 
 export default function PlayPage() {
   return (

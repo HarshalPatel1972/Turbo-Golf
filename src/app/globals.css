@@ -1,26 +1,56 @@
 @import "tailwindcss";
 
+@theme {
+  --color-neon-green: #39FF14;
+  --color-neon-orange: #FF5F1F;
+  --color-brutalist-black: #000000;
+  --color-brutalist-white: #FFFFFF;
+  
+  --font-brutalist: "Inter", system-ui, sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #000000;
+  --foreground: #FFFFFF;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-brutalist);
+  @apply antialiased;
 }
+
+/* Brutalist Utilities */
+.border-brutalist {
+  border: 4px solid white;
+}
+
+.shadow-brutalist-green {
+  box-shadow: 8px 8px 0px 0px #39FF14;
+}
+
+.shadow-brutalist-orange {
+  box-shadow: 8px 8px 0px 0px #FF5F1F;
+}
+
+.btn-brutalist {
+  @apply px-8 py-4 text-2xl font-black uppercase tracking-tighter transition-all duration-100;
+  border: 4px solid white;
+  background: black;
+  color: white;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+}
+
+.btn-brutalist:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 8px 8px 0px 0px #39FF14;
+}
+
+.btn-brutalist:active {
+  transform: translate(0px, 0px);
+  box-shadow: 0px 0px 0px 0px #39FF14;
+}
+

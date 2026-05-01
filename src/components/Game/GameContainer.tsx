@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Phaser from "phaser";
+import GameScene from "./scenes/GameScene";
 
 export default function GameContainer() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -13,58 +14,38 @@ export default function GameContainer() {
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       parent: containerRef.current,
-      width: "100%",
-      height: "100%",
+      width: window.innerWidth,
+      height: window.innerHeight,
       physics: {
         default: "matter",
         matter: {
-          gravity: { x: 0, y: 1 },
-          debug: true,
+          gravity: { x: 0, y: 1.5 },
+          debug: true, // Temporarily enabled for Phase 2 testing
         },
       },
-      scene: {
-        preload: preload,
-        create: create,
-        update: update,
-      },
-      backgroundColor: "#1a1a1a",
+      scene: [GameScene],
+      backgroundColor: "#000000",
       scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
+      pixelArt: false,
+      antialias: true,
     };
 
     const game = new Phaser.Game(config);
     gameRef.current = game;
 
-    function preload(this: Phaser.Scene) {
-      // Future preloads
-    }
+    const handleResize = () => {
+      if (gameRef.current) {
+        gameRef.current.scale.resize(window.innerWidth, window.innerHeight);
+      }
+    };
 
-    function create(this: Phaser.Scene) {
-      const { width, height } = this.scale;
-      
-      this.add.text(width / 2, height / 2, "Engine Initialized: Awaiting Phase 2", {
-        fontSize: "32px",
-        fontFamily: "Inter, Arial, sans-serif",
-        color: "#ffffff",
-        fontStyle: "bold",
-      }).setOrigin(0.5);
-
-      // Matter.js sanity check: add a falling box
-      this.matter.add.rectangle(width / 2, 100, 50, 50, {
-        chamfer: { radius: 5 },
-      });
-      
-      // Ground
-      this.matter.add.rectangle(width / 2, height - 20, width, 40, { isStatic: true });
-    }
-
-    function update(this: Phaser.Scene) {
-      // Game loop
-    }
+    window.addEventListener("resize", handleResize);
 
     return () => {
+      window.removeEventListener("resize", handleResize);
       if (gameRef.current) {
         gameRef.current.destroy(true);
         gameRef.current = null;
@@ -75,7 +56,7 @@ export default function GameContainer() {
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-screen bg-black border-8 border-white"
+      className="w-full h-screen bg-black"
       id="phaser-game-container"
     />
   );

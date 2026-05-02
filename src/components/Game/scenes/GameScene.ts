@@ -102,7 +102,7 @@ export default class GameScene extends Phaser.Scene {
     this.catAI = this.matter.world.nextCategory();
 
     // 1. Backgrounds
-    this.skyBg = this.add.tileSprite(0, 0, width, height, "sky").setOrigin(0).setScrollFactor(0);
+    this.skyBg = this.add.tileSprite(0, 0, width, height, "sky").setOrigin(0).setScrollFactor(0).setDisplaySize(width, height);
     this.mountainsBg = this.add.tileSprite(0, height - 600, config.terrainWidth, 600, "mountains").setOrigin(0, 0).setScrollFactor(0.2);
 
     // 2. Level & Terrain
@@ -211,7 +211,7 @@ export default class GameScene extends Phaser.Scene {
       label: "player",
       collisionFilter: { category: this.catPlayer, mask: this.catGround | this.catSensor }
     });
-    this.player.setFixedRotation().setScale(0.8);
+    this.player.setFixedRotation().setScale(0.12);
 
     // AI
     this.aiBall = this.matter.add.sprite(config.ballStart.x + 30, config.ballStart.y, "ai-ball-tex", undefined, {
@@ -225,7 +225,7 @@ export default class GameScene extends Phaser.Scene {
       label: "ai-player",
       collisionFilter: { category: this.catAI, mask: this.catGround | this.catSensor }
     });
-    this.aiPlayer.setFixedRotation().setScale(0.8);
+    this.aiPlayer.setFixedRotation().setScale(0.12);
 
     // Add coin sprites to the world
     for (let i = 1; i <= 10; i++) {
@@ -233,7 +233,7 @@ export default class GameScene extends Phaser.Scene {
       const cy = 300 + Math.sin(i) * 100;
       this.matter.add.sprite(cx, cy, "coin", undefined, {
         isStatic: true, isSensor: true, label: "coin"
-      }).setScale(0.5);
+      }).setScale(0.08);
     }
   }
 

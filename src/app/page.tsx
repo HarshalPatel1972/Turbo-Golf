@@ -1,56 +1,46 @@
 import Link from "next/link";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 md:p-24 bg-black overflow-hidden relative">
-      {/* Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-        <div className="absolute top-10 left-10 w-64 h-64 border-8 border-white"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 border-8 border-neon-green"></div>
-        <div className="absolute top-1/2 left-1/4 w-32 h-32 border-4 border-neon-orange -rotate-12"></div>
-      </div>
+    <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-sky-400">
+      {/* Cartoon Sky Background */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-40"
+        style={{ backgroundImage: 'url("/assets/sky.png")' }}
+      />
+      
+      {/* Decorative Mountains */}
+      <div 
+        className="absolute bottom-0 w-full h-[400px] bg-repeat-x bg-bottom opacity-60"
+        style={{ backgroundImage: 'url("/assets/mountains.png")', backgroundSize: '1200px' }}
+      />
 
-      <main className="z-10 flex flex-col items-center text-center">
-        <h1 className="text-7xl md:text-9xl font-black italic tracking-tighter uppercase mb-2">
-          TURBO <span className="text-neon-green">GOLF</span>
-        </h1>
-        <p className="text-xl md:text-2xl font-bold uppercase tracking-widest mb-12 bg-white text-black px-4 py-1">
-          THE SPIRITUAL SUCCESSOR
-        </p>
+      <main className="relative z-10 flex flex-col items-center">
+        <header className="mb-12 animate-bounce-slow">
+          <h1 className="text-8xl md:text-[10rem] font-black text-white italic tracking-tighter drop-shadow-[0_10px_0_rgba(0,0,0,1)] text-center">
+            TURBO <br />
+            <span className="text-game-yellow">GOLF</span>
+          </h1>
+          <p className="bg-black text-white px-6 py-2 text-2xl font-black uppercase italic -rotate-2 inline-block mx-auto transform translate-x-12">
+            The Spiritual Successor
+          </p>
+        </header>
 
-        <div className="relative group">
-          {/* Animated Glow Effect */}
-          <div className="absolute -inset-1 bg-neon-green opacity-20 group-hover:opacity-100 blur-xl transition duration-200"></div>
-          
-          <Link href="/play" className="btn-brutalist inline-block">
-            PLAY NOW
+        <div className="flex flex-col gap-6 w-full max-w-md">
+          <Link href="/play" className="btn-game btn-primary text-center">
+            START ROUND
+          </Link>
+          <Link href="/shop" className="btn-game btn-secondary text-center">
+            UPGRADE SHOP
           </Link>
         </div>
 
-        <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl">
-          <div className="border-brutalist p-6 text-left">
-            <h3 className="text-2xl font-black uppercase mb-2 text-neon-orange">HIGH SPEED</h3>
-            <p className="text-sm uppercase font-bold">This isn&apos;t your grandfather&apos;s country club. Race against time.</p>
-          </div>
-          <div className="border-brutalist p-6 text-left">
-            <h3 className="text-2xl font-black uppercase mb-2 text-neon-green">REAL PHYSICS</h3>
-            <p className="text-sm uppercase font-bold">Powered by Matter.js for unpredictable, chaotic results.</p>
-          </div>
-          <div className="border-brutalist p-6 text-left">
-            <h3 className="text-2xl font-black uppercase mb-2 text-white">BRUTALIST UI</h3>
-            <p className="text-sm uppercase font-bold">Aggressive design for aggressive gameplay.</p>
-          </div>
-        </div>
+        <footer className="mt-24 text-black font-black uppercase text-xl bg-white/80 px-4 py-1 rounded-full border-2 border-black">
+          &copy; 2026 TURBO GOLF / CLASSIC EDITION
+        </footer>
       </main>
-
-      <footer className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
-        <div className="text-xs font-black uppercase tracking-tighter">
-          PHASE 1: ENGINE_INIT_SUCCESS
-        </div>
-        <div className="text-xs font-black uppercase tracking-tighter">
-          &copy; 2026 TURBO GOLF / ANTIGRAVITY
-        </div>
-      </footer>
     </div>
   );
 }

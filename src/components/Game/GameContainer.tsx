@@ -1,15 +1,23 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Phaser from "phaser";
 import GameScene from "./scenes/GameScene";
 
 export default function GameContainer() {
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    fetch("/api/profile")
+      .then(res => res.json())
+      .then(data => setProfile(data))
+      .catch(err => console.error("Failed to load profile", err));
+  }, []);
+
+  useEffect(() => {
+    if (!containerRef.current || !profile) return;
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
@@ -20,7 +28,7 @@ export default function GameContainer() {
         default: "matter",
         matter: {
           gravity: { x: 0, y: 1.5 },
-          debug: true, // Temporarily enabled for Phase 2 testing
+          debug: false,
         },
       },
       scene: [GameScene],
@@ -35,6 +43,9 @@ export default function GameContainer() {
 
     const game = new Phaser.Game(config);
     gameRef.current = game;
+
+    // Pass profile data to scene when it's ready
+    game.scene.start("GameScene", { profile });
 
     const handleResize = () => {
       if (gameRef.current) {
@@ -51,7 +62,15 @@ export default function GameContainer() {
         gameRef.current = null;
       }
     };
-  }, []);
+  }, [profile]);
+
+  if (!profile) {
+    return (
+      <div className="w-full h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-4xl font-black italic animate-pulse">LOADING PROFILE...</div>
+      </div>
+    );
+  }
 
   return (
     <div 
